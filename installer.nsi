@@ -8,7 +8,7 @@
 
 Name "${APP_NAME} Installer"
 RequestExecutionLevel user
-OutFile "target/submission-summary-viewer.exe"
+OutFile "target/submission-summary-viewer-installer.exe"
 InstallDir "${INSTALL_DIR}"
 LicenseData "LICENSE"
 
