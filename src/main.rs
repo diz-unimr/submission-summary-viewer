@@ -35,7 +35,7 @@ fn main() -> iced::Result {
             icon: window::icon::from_file_data(include_bytes!("../resources/icon.png"), None).ok(),
             #[cfg(target_os = "linux")]
             platform_specific: PlatformSpecific {
-                application_id: "cert-tools".to_string(),
+                application_id: "submission-summary-viewer".to_string(),
                 ..PlatformSpecific::default()
             },
             ..window::Settings::default()
@@ -264,6 +264,7 @@ impl Ui {
     async fn pick_file() -> Result<PathBuf, ()> {
         let path = rfd::AsyncFileDialog::new()
             .set_title("Open file...")
+            .add_filter("CSV-Datei", &["csv"])
             .pick_file()
             .await
             .ok_or(())?;
