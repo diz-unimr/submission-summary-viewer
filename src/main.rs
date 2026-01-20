@@ -18,12 +18,27 @@ use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+#[cfg(target_os = "linux")]
+use iced::window::settings::PlatformSpecific;
+
 fn main() -> iced::Result {
     application(Ui::new, Ui::update, Ui::view)
         .title("Submission Summary Viewer")
         .settings(Settings {
             default_text_size: Pixels::from(13),
             ..Settings::default()
+        })
+        .window(window::Settings {
+            #[cfg(target_os = "windows")]
+            icon: window::icon::from_file_data(include_bytes!("../resources/icon.ico"), None).ok(),
+            #[cfg(target_os = "linux")]
+            icon: window::icon::from_file_data(include_bytes!("../resources/icon.png"), None).ok(),
+            #[cfg(target_os = "linux")]
+            platform_specific: PlatformSpecific {
+                application_id: "cert-tools".to_string(),
+                ..PlatformSpecific::default()
+            },
+            ..window::Settings::default()
         })
         .resizable(false)
         .window_size((800, 600))

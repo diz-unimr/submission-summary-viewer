@@ -12,6 +12,9 @@ sha2 = { version = "0.10", default-features = false }
 base16ct = { version = "1.0.0", features = ["alloc"] }
 regex = "1.12"
 
+[build-dependencies]
+winresource = "0.1"
+
 # Profiles
 
 [profile.release]
@@ -35,15 +38,17 @@ unused_must_use = "deny"
 # Packaging
 
 [package.metadata.deb]
-copyright = "Copyright (C) 2025 the original author or authors"
+copyright = "Copyright (C) 2026 the original author or authors"
 extended-description = "Application to view MV §64e submission summaries"
 assets = [
     ["target/release/submission-summary-viewer", "usr/bin/", "755"],
-    ["resources/submission-summary-viewer.desktop", "usr/share/applications", "644"]
+    ["resources/submission-summary-viewer.desktop", "usr/share/applications", "644"],
+    ["resources/submission-summary-viewer.svg", "usr/share/icons/hicolor/scalable/apps/", "644"]
 ]
 
 [package.metadata.generate-rpm]
 assets = [
     { source = "target/x86_64-unknown-linux-gnu/release/submission-summary-viewer", dest = "/usr/bin/", mode = "755" },
-    { source = "resources/submission-summary-viewer.desktop", dest = "/usr/share/applications/", mode = "644" }
+    { source = "resources/submission-summary-viewer.desktop", dest = "/usr/share/applications/", mode = "644" },
+    { source = "resources/submission-summary-viewer.svg", dest = "/usr/share/icons/hicolor/scalable/apps/", mode = "644" }
 ]
