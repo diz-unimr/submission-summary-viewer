@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Submission Summary Viewer
+GenericName=Submission Summary Viewer
+TryExec=submission-summary-viewer
+Exec=submission-summary-viewer
+Icon=submission-summary-viewer
+Type=Application
+Categories=Utility;
+Terminal=false
+StartupNotify=true

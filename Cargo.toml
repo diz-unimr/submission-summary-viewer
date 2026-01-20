@@ -1,0 +1,49 @@
+[package]
+name = "submission-summary-viewer"
+description = "Application to view MV §64e submission summaries"
+version = "0.1.0"
+license = "AGPL-3"
+edition = "2024"
+
+[dependencies]
+iced = { version = "0.14", features = ["wayland", "x11", "wgpu", "tiny-skia", "tokio", "web-colors", "image", "advanced"], default-features = false }
+rfd = "0.17"
+sha2 = { version = "0.10", default-features = false }
+base16ct = { version = "1.0.0", features = ["alloc"] }
+regex = "1.12"
+
+# Profiles
+
+[profile.release]
+opt-level = "z"
+codegen-units = 1
+lto = true
+strip = true
+panic = "abort"
+
+# Lints
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+pedantic = { level = "warn", priority = -1 }
+
+[lints.rust]
+unused_must_use = "deny"
+
+# Packaging
+
+[package.metadata.deb]
+copyright = "Copyright (C) 2025 the original author or authors"
+extended-description = "Application to view MV §64e submission summaries"
+assets = [
+    ["target/release/submission-summary-viewer", "usr/bin/", "755"],
+    ["resources/submission-summary-viewer.desktop", "usr/share/applications", "644"]
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/x86_64-unknown-linux-gnu/release/submission-summary-viewer", dest = "/usr/bin/", mode = "755" },
+    { source = "resources/submission-summary-viewer.desktop", dest = "/usr/share/applications/", mode = "644" }
+]
