@@ -129,17 +129,23 @@ impl Ui {
         column![
             container(
                 row![
-                    text("Meldebestätigung"),
                     match &self.file_path {
                         Some(path) => match self.status {
-                            Status::ParseError =>
-                                text(path.to_str().unwrap_or_default()).color(color!(0xFF3333)),
-                            _ => text(path.to_str().unwrap_or_default()).color(color!(0x333333)),
+                            Status::ParseError => colored_content_line(
+                                "Meldebestätigung",
+                                &StringValue::new_valid(path.to_str().unwrap_or_default()),
+                                color!(0xFFCCCC)
+                            ),
+                            _ => content_line(
+                                "Meldebestätigung",
+                                &StringValue::new_valid(path.to_str().unwrap_or_default())
+                            ),
                         },
-                        _ => text("Keine Datei geladen").color(color!(0x777777)),
-                    }
-                    .font(Font::MONOSPACE)
-                    .width(Length::Fill),
+                        _ => content_line(
+                            "Meldebestätigung",
+                            &StringValue::new_valid("Keine Datei geladen"),
+                        ),
+                    },
                     match &self.status {
                         Status::FileLoaded => button("x")
                             .style(button::danger)
@@ -163,7 +169,7 @@ impl Ui {
                             weight: Weight::Bold,
                             ..Font::default()
                         })),
-                        content_line("Tan", &submission_summary.tan),
+                        content_line("TAN", &submission_summary.tan),
                         content_line("Code", &submission_summary.code),
                         row![
                             content_line("Datum", &submission_summary.date),

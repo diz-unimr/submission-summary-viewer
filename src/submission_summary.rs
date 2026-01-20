@@ -109,6 +109,7 @@ where
 
 pub(crate) struct StringValue(String, bool);
 
+#[allow(unused)]
 impl StringValue {
     pub fn new(s: &str, invalid: bool) -> Self {
         Self(s.to_string(), invalid)
@@ -532,6 +533,7 @@ impl Display for ArtDerSequenzierung {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
