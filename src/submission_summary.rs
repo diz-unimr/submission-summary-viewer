@@ -580,6 +580,20 @@ mod tests {
         assert!(parsed.accepted);
     }
 
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_valid_hash_validation() {
+        let parsed = SubmissionSummary::from_str("Vorgangsnummer,Meldebestaetigung\nbad8a31b1759b565bee3d283e68af38e173499bfcce2f50691e7eddda62b2f31,IBE+A123456789+A123456789&20240701001&260530103&KDKK00001&0&O&9&1&C&2&1+9+bad8a31b1759b565bee3d283e68af38e173499bfcce2f50691e7eddda62b2f31").unwrap();
+        assert!(parsed.valid_hash());
+    }
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn test_invalid_hash_validation() {
+        let parsed = SubmissionSummary::from_str("Vorgangsnummer,Meldebestaetigung\nbad8a31b1759b565bee3d283e68af38e173499bfcce2f50691e7eddda62b2f31,IBE+A999999999+A999999999&20240701001&260530103&KDKK00001&0&O&9&1&C&2&1+9+bad8a31b1759b565bee3d283e68af38e173499bfcce2f50691e7eddda62b2f31").unwrap();
+        assert!(!parsed.valid_hash());
+    }
+
     #[rstest]
     #[case("2026-01-01", true)]
     #[case("1800-01-01", false)]
