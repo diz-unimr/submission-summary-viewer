@@ -38,8 +38,31 @@ impl SubmissionSummary {
 
     #[allow(clippy::expect_used)]
     fn matches_count_pattern(s: &str) -> bool {
-        let regexp = regex::Regex::new(r"[0-9]{3}").expect("Invalid regexp");
+        let regexp = regex::Regex::new(r"^[0-9]{3}$").expect("Invalid regexp");
         regexp.is_match(s)
+    }
+
+    #[allow(clippy::expect_used)]
+    fn is_reasonable_date(s: &str) -> bool {
+        let regexp = regex::Regex::new(r"^20[0-9]{2}-(0[1-9]|1[0-2])-([0-2][0-9]|3[0-1])$")
+            .expect("Invalid regexp");
+        regexp.is_match(s)
+    }
+
+    #[allow(clippy::expect_used)]
+    fn parse_date_and_number(s: &str) -> Option<(String, String)> {
+        let regexp =
+            regex::Regex::new(r"^20[0-9]{2}(0[1-9]|1[0-2])([0-2][0-9]|3[0-1])[0-9]{0,2}[1-9]$")
+                .expect("Invalid regexp");
+
+        if s.len() < 9 || !regexp.is_match(s) {
+            return None;
+        }
+
+        let date = format!("{}-{}-{}", &s[0..4], &s[4..6], &s[6..8]);
+        let counter = s[8..s.len()].parse::<String>().ok();
+
+        counter.map(|counter| (date, counter))
     }
 }
 
@@ -71,20 +94,14 @@ impl FromStr for SubmissionSummary {
             return Err(());
         }
 
-        let date = format!(
-            "{}-{}-{}",
-            &parts[1][0..8].to_string()[0..4],
-            &parts[1][0..8].to_string()[4..6],
-            &parts[1][0..8].to_string()[6..8]
-        );
-        let counter = parts[1][8..parts[1].len()]
-            .parse::<String>()
-            .map_err(|_| ())?;
+        let Some((date, counter)) = Self::parse_date_and_number(parts[1]) else {
+            return Err(());
+        };
 
         Ok(SubmissionSummary {
             tan: StringValue::new(&tan, !Self::matches_hash_tan_pattern(&tan)),
             code: StringValue::new_valid(parts[0]),
-            date: StringValue::new_valid(&date),
+            date: StringValue::new(&date, !Self::is_reasonable_date(&date)),
             counter: StringValue::new(&counter, !Self::matches_count_pattern(&counter)),
             ik: parts[2].to_string().parse()?,
             datacenter: parts[3].to_string().parse()?,
@@ -282,7 +299,7 @@ impl FromStr for Ik {
 }
 
 impl Display for Ik {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             Ik::Ik260530012 => write!(f, "Universitätsklinikum Aachen (260530012)"),
             Ik::Ik261101015 => write!(f, "Charité Universitätsmedizin Berlin (261101015)"),
@@ -536,6 +553,7 @@ impl Display for ArtDerSequenzierung {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     #[allow(clippy::unwrap_used)]
@@ -550,12 +568,72 @@ mod tests {
         assert_eq!(parsed.date.to_string(), "2024-07-01");
         assert_eq!(parsed.counter.to_string(), "001");
         assert_eq!(parsed.ik, Ik::Ik260530103);
-        assert_eq!(parsed.datacenter, Datacenter::GRZK00001);
+        assert_eq!(
+            parsed.datacenter,
+            Datacenter::Unknown("KDKK00001".to_string())
+        );
         assert_eq!(parsed.typ_der_meldung, TypDerMeldung::Erstmeldung);
         assert_eq!(parsed.indikationsbereich, Indikationsbereich::O);
         assert_eq!(parsed.kostentraeger, Kostentraeger::Gkv);
         assert_eq!(parsed.art_der_daten, ArtDerDaten::C);
         assert_eq!(parsed.art_der_sequenzierung, ArtDerSequenzierung::Wes);
         assert!(parsed.accepted);
+    }
+
+    #[rstest]
+    #[case("2026-01-01", true)]
+    #[case("1800-01-01", false)]
+    #[case("2100-01-01", false)]
+    #[case("2026-23-35", false)]
+    #[case("2026-1-1", false)]
+    #[case("2026-01-10", true)]
+    #[case("2026-10-12", true)]
+    #[case("2024-02-29", true)]
+    #[case("2026-13-01", false)]
+    #[case("2026-01-32", false)]
+    fn test_date_validation(#[case] date: &str, #[case] expected: bool) {
+        assert_eq!(SubmissionSummary::is_reasonable_date(date), expected);
+    }
+
+    #[rstest]
+    #[case("1", false)]
+    #[case("001", true)]
+    #[case("100", true)]
+    #[case("123", true)]
+    #[case("11", false)]
+    #[case("1234", false)]
+    fn test_number_validation(#[case] date: &str, #[case] expected: bool) {
+        assert_eq!(SubmissionSummary::matches_count_pattern(date), expected);
+    }
+
+    #[rstest]
+    #[case("202601011", "2026-01-01", "1")]
+    #[case("2026010112", "2026-01-01", "12")]
+    #[case("20260101123", "2026-01-01", "123")]
+    #[case("20260109001", "2026-01-09", "001")]
+    #[case("20260110001", "2026-01-10", "001")]
+    #[case("20260111123", "2026-01-11", "123")]
+    #[case("20260919123", "2026-09-19", "123")]
+    #[case("20261020123", "2026-10-20", "123")]
+    #[case("20261221123", "2026-12-21", "123")]
+    #[case("20261229123", "2026-12-29", "123")]
+    #[case("20261230123", "2026-12-30", "123")]
+    #[case("20261231123", "2026-12-31", "123")]
+    fn test_should_parse_date_and_number(
+        #[case] input: &str,
+        #[case] date: &str,
+        #[case] number: &str,
+    ) {
+        assert_eq!(
+            SubmissionSummary::parse_date_and_number(input),
+            Some((date.to_string(), number.to_string()))
+        );
+    }
+
+    #[rstest]
+    fn test_should_not_parse_date_and_number(
+        #[values("20260101", "20260101123456789", "260101001", "", "irgendwas")] input: &str,
+    ) {
+        assert_eq!(SubmissionSummary::parse_date_and_number(input), None);
     }
 }
