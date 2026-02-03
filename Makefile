@@ -21,7 +21,7 @@ version:
 .PHONY: win-installer
 win-installer: win-binary-x86_64
 	makensis installer.nsi
-	mv target/$(NAME)-installer.exe target/$(NAME)-installer-$(VERSION).exe || ren target/$(NAME)-installer.exe target/$(NAME)-installer-$(VERSION).exe
+	mv target/$(NAME)-installer.exe target/$(NAME)-installer-$(VERSION).exe
 
 .PHONY: win-package
 win-package: win-binary-x86_64
@@ -29,7 +29,7 @@ win-package: win-binary-x86_64
 	cp target/x86_64-pc-windows-gnu/release/$(NAME).exe $(NAME)/
 	cp LICENSE $(NAME)/
 	# first try (linux) zip command, then powershell sub command to create ZIP file
-	zip target/$(NAME)-$(VERSION)_win64.zip $(NAME)/* || powershell Compress-ARCHIVE $(NAME) target\$(NAME)-$(VERSION)_win64.zip
+	zip target/$(NAME)-$(VERSION)_win64.zip $(NAME)/*
 	rm -rf $(NAME) || true
 
 .PHONY: linux-package
