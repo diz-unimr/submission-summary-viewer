@@ -10,7 +10,7 @@ else
 endif
 VERSION := "$(GITTAG)$(GITDEV)"
 
-NAME := "submission-summary-viewer"
+NAME := submission-summary-viewer
 
 package-all: win-installer win-package linux-package
 
