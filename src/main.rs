@@ -7,7 +7,8 @@ use crate::submission_summary::{
 };
 use iced::border::Radius;
 use iced::font::Weight;
-use iced::widget::{button, column, container, row, rule, text, text_input, Row};
+use iced::widget::image::Handle;
+use iced::widget::{button, column, container, image, row, rule, text, text_input, tooltip, Row};
 use iced::window::Event;
 use iced::{
     alignment, application, color, window, Background, Border, Color, Element, Font, Pixels, Task,
@@ -17,9 +18,15 @@ use std::cmp::PartialEq;
 use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::sync::LazyLock;
 
 #[cfg(target_os = "linux")]
 use iced::window::settings::PlatformSpecific;
+
+static ERROR_ICON: LazyLock<Handle> = LazyLock::new(|| {
+    let bytes: &[u8] = include_bytes!("../resources/error.png");
+    Handle::from_bytes(bytes)
+});
 
 fn main() -> iced::Result {
     application(Ui::new, Ui::update, Ui::view)
@@ -117,7 +124,27 @@ impl Ui {
                         placeholder: color!(0x888888),
                         value: color!(0x333333),
                         ..text_input::default(theme, status)
-                    })
+                    }),
+                if let Some(error_message) = content.error_message()
+                    && content.is_invalid()
+                {
+                    container(tooltip(
+                        image(ERROR_ICON.clone())
+                            .width(Length::Fixed(20.0))
+                            .height(Length::Fixed(20.0)),
+                        container(text(error_message))
+                            .style(move |_| container::Style {
+                                background: Some(Background::Color(color!(0x333333))),
+                                text_color: Some(Color::WHITE),
+                                ..container::Style::default()
+                            })
+                            .padding(4),
+                        tooltip::Position::Bottom,
+                    ))
+                    .padding(4)
+                } else {
+                    container("")
+                }
             ]
             .align_y(alignment::Vertical::Center)
         }
@@ -214,11 +241,15 @@ impl Ui {
                         },
                         colored_content_line(
                             "Qualitätskontrolle",
-                            &StringValue::new_valid(if submission_summary.accepted {
-                                "bestanden"
-                            } else {
-                                "nicht bestanden"
-                            }),
+                            &StringValue::new(
+                                if submission_summary.accepted {
+                                    "bestanden"
+                                } else {
+                                    "nicht bestanden"
+                                },
+                                !submission_summary.accepted,
+                                "Meldung wurde nicht akzeptiert"
+                            ),
                             if submission_summary.accepted {
                                 color!(0xCCFFCC)
                             } else {
@@ -226,7 +257,7 @@ impl Ui {
                             }
                         ),
                         colored_content_line(
-                            "Sha256-Hash",
+                            "SHA256-Hash",
                             &submission_summary.hash_wert,
                             if submission_summary.valid_hash() {
                                 color!(0xCCFFCC)

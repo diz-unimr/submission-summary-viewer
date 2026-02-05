@@ -21,15 +21,16 @@ pub(crate) struct SubmissionSummary {
 
 impl SubmissionSummary {
     pub(crate) fn valid_hash(&self) -> bool {
-        let mut hasher = Sha256::new();
-        hasher.update(self.hash_string.as_bytes());
-        let hash_result = hasher.finalize();
-        let hash_result = base16ct::lower::encode_string(&hash_result);
-        hash_result == self.hash_wert.0
+        Self::calc_sha256(&self.hash_string) == self.hash_wert.value
     }
-}
 
-impl SubmissionSummary {
+    fn calc_sha256(s: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(s.as_bytes());
+        let hash_result = hasher.finalize();
+        base16ct::lower::encode_string(&hash_result)
+    }
+
     #[allow(clippy::expect_used)]
     fn matches_hash_tan_pattern(s: &str) -> bool {
         let regexp = regex::Regex::new(r"[0-9a-fA-F]{64}").expect("Invalid regexp");
@@ -99,10 +100,18 @@ impl FromStr for SubmissionSummary {
         };
 
         Ok(SubmissionSummary {
-            tan: StringValue::new(&tan, !Self::matches_hash_tan_pattern(&tan)),
+            tan: StringValue::new(
+                &tan,
+                !Self::matches_hash_tan_pattern(&tan),
+                "Ungültige TAN: Entspricht nicht den Vorgaben",
+            ),
             code: StringValue::new_valid(parts[0]),
-            date: StringValue::new(&date, !Self::is_reasonable_date(&date)),
-            counter: StringValue::new(&counter, !Self::matches_count_pattern(&counter)),
+            date: StringValue::new(&date, !Self::is_reasonable_date(&date), "Ungültiges Datum"),
+            counter: StringValue::new(
+                &counter,
+                !Self::matches_count_pattern(&counter),
+                "Ungültiger Wert: Entspricht nicht den Vorgaben",
+            ),
             ik: parts[2].to_string().parse()?,
             datacenter: parts[3].to_string().parse()?,
             typ_der_meldung: parts[4].to_string().parse()?,
@@ -111,8 +120,13 @@ impl FromStr for SubmissionSummary {
             art_der_daten: parts[8].to_string().parse()?,
             art_der_sequenzierung: parts[9].to_string().parse()?,
             accepted: parts[10] == "1",
-            hash_string,
-            hash_wert: StringValue::new(&hash_wert, !Self::matches_hash_tan_pattern(&hash_wert)),
+            hash_string: hash_string.clone(),
+            hash_wert: StringValue::new(
+                &hash_wert,
+                !Self::matches_hash_tan_pattern(&hash_wert)
+                    || Self::calc_sha256(&hash_string) != hash_wert,
+                "Ungültiger SHA256-Hash",
+            ),
         })
     }
 }
@@ -122,34 +136,57 @@ where
     Self: Display + Sized,
 {
     fn is_invalid(&self) -> bool;
+
+    fn error_message(&self) -> Option<String> {
+        if self.is_invalid() {
+            return Some(self.to_string());
+        }
+        None
+    }
 }
 
-pub(crate) struct StringValue(String, bool);
+#[allow(unused)]
+pub(crate) struct StringValue {
+    value: String,
+    invalid: bool,
+    error_message: String,
+}
 
 #[allow(unused)]
 impl StringValue {
-    pub fn new(s: &str, invalid: bool) -> Self {
-        Self(s.to_string(), invalid)
+    pub fn new(s: &str, invalid: bool, error_message: &str) -> Self {
+        Self {
+            value: s.to_string(),
+            invalid,
+            error_message: error_message.to_string(),
+        }
     }
 
     pub fn new_valid(s: &str) -> Self {
-        Self::new(s, false)
+        Self::new(s, false, "")
     }
 
-    pub fn new_invalid(s: &str) -> Self {
-        Self::new(s, true)
+    pub fn new_invalid(s: &str, error_message: &str) -> Self {
+        Self::new(s, true, error_message)
     }
 }
 
 impl CheckedValue for StringValue {
     fn is_invalid(&self) -> bool {
-        self.1 || self.0.is_empty()
+        self.invalid || self.value.is_empty()
+    }
+
+    fn error_message(&self) -> Option<String> {
+        if self.invalid {
+            return Some(self.error_message.clone());
+        }
+        None
     }
 }
 
 impl Display for StringValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 
