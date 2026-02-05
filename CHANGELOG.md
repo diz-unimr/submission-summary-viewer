@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/diz-unimr/submission-summary-viewer/compare/v0.1.2...v0.1.3) (2026-02-05)
+
+
+### Features
+
+* show issue details ([#5](https://github.com/diz-unimr/submission-summary-viewer/issues/5)) ([80b9ec1](https://github.com/diz-unimr/submission-summary-viewer/commit/80b9ec1f50d47ca64d4cede0e0e8658b2843abe8))
+
 ## [0.1.2](https://github.com/diz-unimr/submission-summary-viewer/compare/v0.1.1...v0.1.2) (2026-02-03)
 
 
