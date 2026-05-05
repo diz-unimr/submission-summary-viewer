@@ -40,7 +40,7 @@ jobs:
       # Only run, if release is created
       - name: Release
         if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             target/*linux.tar.gz
@@ -67,7 +67,7 @@ jobs:
       # Only run, if release is created
       - name: Release
         if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             target/*win64.zip
