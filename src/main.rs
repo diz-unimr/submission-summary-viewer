@@ -283,7 +283,7 @@ impl Ui {
         .into()
     }
 
-    fn subscription(&self) -> iced::Subscription<Message> {
+    fn subscription(_: &Self) -> iced::Subscription<Message> {
         window::events().map(|(_, event)| match event {
             Event::FileDropped(file) => Message::ReadFile(Ok(file)),
             _ => Message::Empty,
