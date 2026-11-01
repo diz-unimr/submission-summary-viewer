@@ -16,7 +16,7 @@ regex = "1.12"
 winresource = "0.1"
 
 [dev-dependencies]
-rstest = "0.26"
+rstest = "0.28"
 
 # Profiles
 
